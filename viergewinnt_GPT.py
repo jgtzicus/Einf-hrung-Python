@@ -13,6 +13,10 @@ PLAYER = 0
 AI = 1
 PLAYER_PIECE = 1
 AI_PIECE = 2
+SCHWARZ = (0, 0, 0)
+WEISS = (255, 255, 255)
+ROT = (255, 0, 0)
+GELB = (255, 255, 0)
 
 # Funktionen
 def create_board(): # Erstellt das Spielfeld als Array
@@ -183,8 +187,6 @@ game_over = False
 
 pygame.init()
 
-SQUARE_SIZE = 100
-
 width = COLUMN_COUNT * SQUARE_SIZE
 height = (ROW_COUNT + 1) * SQUARE_SIZE
 
@@ -194,9 +196,9 @@ screen = pygame.display.set_mode(size)
 draw_board(board)
 pygame.display.update()
 
-myfont = pygame.font.SysFont("monospace", 75)
+font = pygame.font.SysFont("monospace", 75)
 
-turn = random.randint(PLAYER, AI)
+turn = PLAYER
 
 while not game_over:
 
@@ -205,15 +207,15 @@ while not game_over:
             sys.exit()
 
         if event.type == pygame.MOUSEMOTION:
-            pygame.draw.rect(screen, (0, 0, 0), (0, 0, width, SQUARE_SIZE))
+            pygame.draw.rect(screen, SCHWARZ, (0, 0, width, SQUARE_SIZE))
             posx = event.pos[0]
             if turn == PLAYER:
-                pygame.draw.circle(screen, (255, 0, 0), (posx, int(SQUARE_SIZE / 2)), int(SQUARE_SIZE / 2 - 5))
+                pygame.draw.circle(screen, ROT, (posx, int(SQUARE_SIZE / 2)), int(SQUARE_SIZE / 2 - 5))
 
         pygame.display.update()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            pygame.draw.rect(screen, (0, 0, 0), (0, 0, width, SQUARE_SIZE))
+            pygame.draw.rect(screen, SCHWARZ, (0, 0, width, SQUARE_SIZE))
             # Spieler Eingabe
             if turn == PLAYER:
                 posx = event.pos[0]
@@ -224,12 +226,12 @@ while not game_over:
                     drop_piece(board, row, col, PLAYER_PIECE)
 
                     if winning_move(board, PLAYER_PIECE):
-                        label = myfont.render("Spieler gewinnt!!", 1, (255, 0, 0))
+                        label = font.render("Spieler gewinnt!!", 1, ROT)
                         screen.blit(label, (40, 10))
                         game_over = True
 
                     if len(get_valid_locations(board)) == 0:  # Überprüfen auf Unentschieden
-                        label = myfont.render("Unentschieden!", 1, (255, 255, 255))
+                        label = font.render("Unentschieden!", 1, WEISS)
                         screen.blit(label, (40, 10))
                         game_over = True
 
@@ -240,7 +242,7 @@ while not game_over:
                     draw_board(board)
 
     # KI Eingabe
-    if turn == AI and not game_over:
+    if turn == AI and not game_over: # doppelte Abfrage nach game_over (trotz while-Schleife), da sich der Wert bereits geändert haben kann!
         col, _ = minimax(board, 4, -float("inf"), float("inf"), True)  # Reduziere die Suchtiefe, um die Spielzeit zu begrenzen
 
         if is_valid_location(board, col):
@@ -249,12 +251,12 @@ while not game_over:
             drop_piece(board, row, col, AI_PIECE)
 
             if winning_move(board, AI_PIECE):
-                label = myfont.render("KI gewinnt!!", 1, (255, 255, 0))
+                label = font.render("KI gewinnt!!", 1, GELB)
                 screen.blit(label, (40, 10))
                 game_over = True
 
             if len(get_valid_locations(board)) == 0:  # Überprüfen auf Unentschieden
-                label = myfont.render("Unentschieden!", 1, (255, 255, 255))
+                label = font.render("Unentschieden!", 1, WEISS)
                 screen.blit(label, (40, 10))
                 game_over = True
 
