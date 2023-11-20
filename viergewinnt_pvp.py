@@ -13,7 +13,7 @@ BOARD_WIDTH = 7
 BOARD_HEIGHT = 6
 WINDOW_WIDTH = CELL_SIZE * BOARD_WIDTH
 WINDOW_HEIGHT = CELL_SIZE * (BOARD_HEIGHT + 1)
-GAME_FONT = pygame.font.SysFont('Arial', 24)
+FONT = pygame.font.SysFont('Arial', 24)
 SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('Four in a Row')
 
@@ -43,6 +43,30 @@ def draw_board():
             elif game_board[row][col] == 2:
                 pygame.draw.circle(SCREEN, YELLOW, (int(col * CELL_SIZE + CELL_SIZE / 2), int((row + 1) * CELL_SIZE + CELL_SIZE / 2)), RADIUS)
 
+# Function to select the game mode
+def select_gamemode():
+    global game_mode
+    game_mode_text = FONT.render('Select game mode', True, WHITE)
+    game_mode_options = FONT.render('1 - PvP | 2 - PvAI', True, WHITE)
+    SCREEN.blit(game_mode_text, (WINDOW_WIDTH / 2 - game_mode_text.get_width() / 2, CELL_SIZE / 2 - game_mode_text.get_height() / 2 - CELL_SIZE / 8))
+    SCREEN.blit(game_mode_options, (WINDOW_WIDTH / 2 - game_mode_options.get_width() / 2, CELL_SIZE / 2 - game_mode_text.get_height() / 2 + CELL_SIZE / 8))
+    pygame.display.update()
+    while game_mode != 0:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    quit_game()
+                if event.key == pygame.K_1 or event.key == pygame.K_LEFT:
+                    game_mode = 1
+                    pygame.draw.rect(SCREEN, BLACK, (0,0, WINDOW_WIDTH, CELL_SIZE))
+                    return
+                elif event.key == pygame.K_2 or event.key == pygame.K_RIGHT:
+                    game_mode = 2
+                    pygame.draw.rect(SCREEN, BLACK, (0,0, WINDOW_WIDTH, CELL_SIZE))
+                    return
+
 # Function to handle player input and update the game board accordingly
 def handle_input():
     global current_player
@@ -52,7 +76,7 @@ def handle_input():
     else:
         mouse_x, _ = pygame.mouse.get_pos()
         col = int(mouse_x / CELL_SIZE)
-    print(col)
+    print(f'Selected Column: {col}')
     if game_board[0][col] == 0: # If top row of selected col isn't filled
         for row in range(BOARD_HEIGHT - 1, -1, -1): # From down to top (step = -1)
             if game_board[row][col] == 0:
@@ -88,27 +112,35 @@ def check_win():
 # Function to display the winner and ask if the players want to play again
 def display_winner(winner):
     if winner == 1:
-        winner_text = GAME_FONT.render('Player 1 wins!', True, RED)
+        winner_text = FONT.render('Player 1 wins!', True, RED)
     elif winner == 2:
-        winner_text = GAME_FONT.render('Player 2 wins!', True, YELLOW)
+        winner_text = FONT.render('Player 2 wins!', True, YELLOW)
     else:
-        winner_text = GAME_FONT.render('Tie game!', True, (255, 255, 255))
-    SCREEN.blit(winner_text, (WINDOW_WIDTH / 2 - winner_text.get_width() / 2, WINDOW_HEIGHT / 2 - winner_text.get_height() / 2))
+        winner_text = FONT.render('Tie game!', True, WHITE)
+    play_again_text = FONT.render('Play again?', True, WHITE)
+    SCREEN.blit(winner_text, (WINDOW_WIDTH / 2 - winner_text.get_width() / 2, CELL_SIZE / 2 - winner_text.get_height() / 2 - CELL_SIZE / 8))
+    SCREEN.blit(play_again_text, (WINDOW_WIDTH / 2 - play_again_text.get_width() / 2, CELL_SIZE / 2 - play_again_text.get_height() / 2 + CELL_SIZE / 8))
     pygame.display.update()
-    pygame.time.wait(3000)
-    play_again_text = GAME_FONT.render('Play again? (Y/N)', True, (255, 255, 255))
-    SCREEN.blit(play_again_text, (WINDOW_WIDTH / 2 - play_again_text.get_width() / 2, WINDOW_HEIGHT / 2 + winner_text.get_height() / 2 + 10))
-    pygame.display.update()
-    while True:
+
+    # Player input for a new game
+    while game_over:
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit_game()
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_y:
+                if event.key == pygame.K_y or event.key == pygame.K_j or event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN:
                     return True
-                elif event.key == pygame.K_n:
+                elif event.key == pygame.K_n or event.key == pygame.K_ESCAPE:
                     return False
 
+# AI should decide for one out of all columns
 def decide_for_col():
     return random.randint(0, BOARD_WIDTH - 1) # AI is temporarily random!
+
+# Function to quit the game
+def quit_game():
+    pygame.quit()
+    sys.exit()
 
 def main():
     global game_board
@@ -119,19 +151,17 @@ def main():
     draw_board()
     print(game_board)
 
-    game_mode = int(input('1 - PvP; 2 - PvAI'))
+    select_gamemode()
 
     # Main game loop
     while not game_over:
         # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                quit_game()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
+                    quit_game()
             if event.type == pygame.MOUSEMOTION:
                 pygame.draw.rect(SCREEN, BLACK, (0,0, WINDOW_WIDTH, CELL_SIZE))
                 posx = event.pos[0]
@@ -156,9 +186,11 @@ def main():
                 game_board = np.zeros((BOARD_HEIGHT, BOARD_WIDTH))
                 current_player = 1
                 game_over = False
+                pygame.draw.rect(SCREEN, BLACK, (0,0, WINDOW_WIDTH, CELL_SIZE))
+                draw_board()
+                select_gamemode()
             else:
-                pygame.quit()
-                sys.exit()
+                quit_game()
 
         # Update the display
         pygame.display.update()
